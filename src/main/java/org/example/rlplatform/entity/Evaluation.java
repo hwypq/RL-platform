@@ -2,6 +2,7 @@ package org.example.rlplatform.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import org.w3c.dom.Text;
 
 import java.time.LocalDateTime;
 
@@ -17,30 +18,23 @@ public class Evaluation {
     @Column(name = "student_id", nullable = false)
     private Long studentId;
 
-    @Column(nullable = false)
-    private Double score;
-
     @Column(name = "agent_name", nullable = false)
     private String agentName;
 
     @Column(nullable = false)
     private String environment;
 
-    /** 模型名称，用于加载 models/{modelName}。为空时由 agentName + 环境简称推导，如 DDPG_cheetah */
-    @Column(name = "model_name")
-    private String modelName;
+    @Column(name = "model_id")
+    private Integer modelId;
 
     @Column(nullable = false)
     private Integer episodes;
 
     @Column(nullable = false)
-    private Double avgReward;
-
-    @Column(nullable = false)
     private String status; // PENDING / RUNNING / FINISHED
 
-    @Column(name = "result_path")
-    private String resultPath; // 日志文件路径
+    @Column(name = "error_message", columnDefinition = "Text")
+    private String errorMessage;
 
     @Column(name="create_time")
     private LocalDateTime createTime;

@@ -24,9 +24,9 @@ public class EvaluationController {
         return Result.success(evaluationService.getEvaluationById(id));
     }
 
-    /** 触发一次 Python 评测（如 half-cheetah + DDPG），同步执行并返回更新后的评测结果 */
     @PostMapping("/{id}/run")
-    public Result<Evaluation> runEvaluation(@PathVariable long id) {
-        return Result.success(evaluationService.runEvaluation(id));
+    public Result<Void> runEvaluation(@PathVariable long id) {
+        evaluationService.runEvaluationAsync(id);
+        return Result.success();
     }
 }

@@ -7,6 +7,7 @@ public interface EvaluationService {
 
     Evaluation getEvaluationById(long id);
 
-    /** 调用 Python 脚本执行评测（如 half-cheetah + DDPG），更新结果并保存。 */
-    Evaluation runEvaluation(long evaluationId);
+    void runEvaluation(Long evaluationId);
+
+    void runEvaluationAsync(long evaluationId);
 }
