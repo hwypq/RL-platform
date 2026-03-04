@@ -24,14 +24,14 @@ public class Evaluation {
     @Column(nullable = false)
     private String environment;
 
-    @Column(name = "model_id")
+    @Column(name = "model_id", nullable = false)
     private Integer modelId;
 
     @Column(nullable = false)
     private Integer episodes;
 
     @Column(nullable = false)
-    private String status; // PENDING / RUNNING / FINISHED
+    private String status = "PENDING"; // PENDING / RUNNING / FINISHED
 
     @Column(name = "error_message", columnDefinition = "Text")
     private String errorMessage;

@@ -17,9 +17,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.TimeUnit;
 
-/**
- * 负责调用 Python 脚本，对 Evaluation 执行评测。
- */
+
 @Component
 public class EvaluationExecuter {
 
@@ -54,13 +52,14 @@ public class EvaluationExecuter {
         }
 
         ProcessBuilder pb = new ProcessBuilder(
-                pythonCmd,
-                script.toString(),
+                pythonCmd, script.toString(),
                 "--env", evaluation.getEnvironment(),
                 "--agent", agentType,
                 "--model_name", modelName,
                 "--episodes", String.valueOf(evaluation.getEpisodes()),
-                "--workspace", workspaceConfig
+                "--workspace", workspaceConfig,
+                "--render_video"
+                // "--realtime_render"
         );
 
         pb.redirectErrorStream(true);
@@ -128,12 +127,13 @@ public class EvaluationExecuter {
         }
     }
 
-    /** 将本次评测结果写入 evaluation_result 表；失败时不抛异常，避免 @Async 报 Unexpected exception */
+
     private void saveEvaluationResult(Evaluation evaluation, JsonNode root, String jsonLine) {
         try {
             EvaluationResult er = new EvaluationResult();
             er.setEvaluationId(evaluation.getId());
             er.setResult("FINISHED".equals(evaluation.getStatus()) ? 1 : 0);
+//            System.out.println("Saving EvaluationResult..." + root.toString());
             if (jsonLine != null) {
                 er.setDetailedResults(jsonLine);
             } else if (root != null) {

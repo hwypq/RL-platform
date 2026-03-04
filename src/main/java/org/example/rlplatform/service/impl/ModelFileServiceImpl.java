@@ -52,14 +52,14 @@ public class ModelFileServiceImpl implements ModelFileService {
 
         String originalfileName = file.getOriginalFilename();
         String suffix = originalfileName.substring(originalfileName.lastIndexOf("."));
-        if (suffix.isEmpty()) {
-            throw new IllegalArgumentException("invalid file name");
-        }
         String fileName = UUID.randomUUID().toString() + suffix;
 
         String baseDir = (workspace != null && !workspace.isBlank()) ? workspace : Paths.get(System.getProperty("user.dir")).toString();
         Path modelsDir = Paths.get(baseDir, "models");
-        System.out.println(modelsDir.resolve(fileName));
+         if (!modelsDir.toFile().exists()) {
+             modelsDir.toFile().mkdirs();
+         }
+        // System.out.println(modelsDir.resolve(fileName));
         file.transferTo(modelsDir.resolve(fileName));
         ModelFile modelFile = new ModelFile();
         modelFile.setStudentId(studentId);

@@ -35,6 +35,7 @@ public class EvaluationServiceImpl implements EvaluationService {
     @Override
     public void runEvaluation(Long evaluationId) {
         Evaluation evaluation = getEvaluationById(evaluationId);
+        evaluation.setErrorMessage(null);
         evaluation.setStatus("RUNNING");
         evaluation.setUpdateTime(now());
         evaluationRepository.save(evaluation);

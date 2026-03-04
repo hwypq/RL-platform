@@ -50,7 +50,7 @@ public class EvaluationResultServiceImpl implements EvaluationResultService {
             throw new IllegalArgumentException("no result_dir for evaluation result id: " + id);
         }
         String base = (workspace != null && !workspace.isBlank()) ? workspace : Paths.get(System.getProperty("user.dir")).toString();
-        Path videoPath = Paths.get(base, er.getResultDir(), "video_0.mp4");
+        Path videoPath = Paths.get(base, er.getResultDir() + ".mp4");
         File file = videoPath.toFile();
         if (!file.exists() || !file.isFile()) {
             throw new IllegalArgumentException("video file not found: " + videoPath);
