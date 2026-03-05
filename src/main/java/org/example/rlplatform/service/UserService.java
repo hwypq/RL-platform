@@ -3,6 +3,7 @@ package org.example.rlplatform.service;
 
 import org.example.rlplatform.entity.User;
 import org.example.rlplatform.entity.UserRole;
+import org.springframework.web.bind.annotation.PathVariable;
 
 import java.util.List;
 
@@ -20,6 +21,8 @@ public interface UserService {
     void updatePwd(String newPwd);
 
     List<User> list();
+
+    void changeUserRole(Integer id, UserRole newRole);
 
     void softDeleteStudent(Integer id);
 }

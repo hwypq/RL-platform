@@ -28,7 +28,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public List<User> findByRole(UserRole role) {
-        return userRepository.findByRole(role);
+        return userRepository.findByRoleAndIsDeletedFalse(role);
     }
 
     @Override
@@ -78,8 +78,35 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public List<User> list() {
-        return userRepository.findAll();
+        return userRepository.findAllByIsDeletedFalse();
     }
+
+    @Override
+    @Transactional
+    public void changeUserRole(Integer id, UserRole newRole) {
+        if (newRole == null) {
+            throw new RuntimeException("目标身份不能为空");
+        }
+
+        User dbUser = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("用户不存在"));
+
+        if (Boolean.TRUE.equals(dbUser.getIsDeleted())) {
+            throw new RuntimeException("用户已删除或不存在");
+        }
+
+        Map<String, Object> claims = ThreadLocalUtil.get();
+        Integer currentId = (Integer) claims.get("id");
+
+        if (dbUser.getId().equals(currentId) && newRole != UserRole.ADMIN) {
+            throw new RuntimeException("不能移除自己的管理员权限");
+        }
+
+        dbUser.setRole(newRole);
+        dbUser.setUpdateTime(LocalDateTime.now());
+        userRepository.save(dbUser);
+    }
+
 
     @Override
     @Transactional

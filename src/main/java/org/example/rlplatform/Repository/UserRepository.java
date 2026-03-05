@@ -11,10 +11,14 @@ import java.util.List;
 
 public interface UserRepository extends JpaRepository<User, Integer> {
 
-    @Query("SELECT u FROM User u WHERE u.username = :username")
+    @Query("SELECT u FROM User u WHERE u.username = :username AND u.isDeleted = false")
     User findByUsername(@Param("username") String username);
 
     List<User> findByRole(UserRole role);
+
+    List<User> findByRoleAndIsDeletedFalse(UserRole role);
+
+    List<User> findAllByIsDeletedFalse();
 
     @Modifying
     @Query("UPDATE User u SET u.password = :password WHERE u.id = :id")
@@ -23,8 +27,4 @@ public interface UserRepository extends JpaRepository<User, Integer> {
     @Modifying
     @Query("UPDATE User u SET u.userPic = :avatar WHERE u.id = :id")
     void updateAvatar(@Param("avatar") String avatar, @Param("id") Integer id);
-
-    @Modifying
-    @Query("UPDATE User u SET u.isDeleted = :isDeleted WHERE u.id = :id")
-    void updateIsDeleted(@Param("isDeleted") Boolean isDeleted, @Param("id") Integer id);
 }

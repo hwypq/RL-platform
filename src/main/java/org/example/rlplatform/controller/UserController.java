@@ -15,6 +15,7 @@ import org.example.rlplatform.utils.Md5Util;
 import org.example.rlplatform.utils.ThreadLocalUtil;
 import org.hibernate.validator.constraints.URL;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -22,6 +23,8 @@ import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 @RestController
 @RequestMapping("/user")
@@ -30,6 +33,9 @@ public class UserController {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private StringRedisTemplate stringRedisTemplate;
 
     @PostMapping("/register")
     public Result register(
@@ -65,6 +71,13 @@ public class UserController {
             claims.put("id", loginuser.getId());
             claims.put("username", loginuser.getUsername());
             claims.put("role", loginuser.getRole().name());
+
+            String tokenVersion = UUID.randomUUID().toString();
+            claims.put("tokenVersion", tokenVersion);
+
+            String key = "login:version:" + loginuser.getId();            
+            stringRedisTemplate.opsForValue().set(key, tokenVersion, 1, TimeUnit.HOURS);
+
             String token = JwtUtil.genToken(claims);
             return Result.success(token);
         }
@@ -127,10 +140,26 @@ public class UserController {
         return Result.success(userService.list());
     }
 
+    @PatchMapping("/{id}/role")
+    @PreAuthorize("hasRole('ADMIN')")
+    public Result changeRole(@PathVariable Integer id,
+                             @RequestParam String role) {
+        UserRole newRole;
+        try {
+            newRole = UserRole.valueOf(role.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            return Result.error("目标身份参数无效，应为 STUDENT / TEACHER / ADMIN");
+        }
+
+        userService.changeUserRole(id, newRole);
+        return Result.success();
+    }
+
     @DeleteMapping("/students/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
     public Result deleteStudent(@PathVariable Integer id){
         userService.softDeleteStudent(id);
         return Result.success();
     }
+
 }

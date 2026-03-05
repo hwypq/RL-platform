@@ -6,6 +6,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.example.rlplatform.utils.JwtUtil;
 import org.example.rlplatform.utils.ThreadLocalUtil;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -27,6 +29,9 @@ import java.util.Map;
  */
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
+
+    @Autowired
+    private StringRedisTemplate stringRedisTemplate;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -56,6 +61,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 if (role != null && !role.isBlank()) {
                     // Spring Security 里角色名需要以 ROLE_ 前缀
                     authorities = List.of(new SimpleGrantedAuthority("ROLE_" + role));
+                }
+
+                Integer userId = (Integer) claims.get("id");
+                String tokenVersion = (String) claims.get("tokenVersion");
+
+                if (userId != null || tokenVersion != null) {
+                    String key = "login:version:" + userId;
+                    String currentVersion = stringRedisTemplate.opsForValue().get(key);
+                    if (currentVersion == null || !currentVersion.equals(tokenVersion)) {
+                        SecurityContextHolder.clearContext();
+                        throw new RuntimeException("token version is invalid");
+                    }
                 }
 
                 if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
