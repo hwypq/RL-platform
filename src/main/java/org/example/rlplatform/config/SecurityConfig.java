@@ -1,5 +1,7 @@
 package org.example.rlplatform.config;
 
+import org.example.rlplatform.security.JsonAccessDeniedHandler;
+import org.example.rlplatform.security.JsonAuthenticationEntryPoint;
 import org.example.rlplatform.security.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -17,17 +19,20 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http,
-                                                   JwtAuthenticationFilter jwtAuthenticationFilter) throws Exception {
+                                                   JwtAuthenticationFilter jwtAuthenticationFilter,
+                                                   JsonAuthenticationEntryPoint jsonAuthenticationEntryPoint,
+                                                   JsonAccessDeniedHandler jsonAccessDeniedHandler) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
-                // 不使用服务端 Session
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/user/login", "/user/register").permitAll()
                         .anyRequest().authenticated()
                 )
-                // 在 UsernamePasswordAuthenticationFilter 之前加入自定义 JWT 过滤器
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint(jsonAuthenticationEntryPoint)
+                        .accessDeniedHandler(jsonAccessDeniedHandler)
+                )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

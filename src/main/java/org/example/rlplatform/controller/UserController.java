@@ -2,11 +2,9 @@ package org.example.rlplatform.controller;
 
 
 import io.micrometer.common.util.StringUtils;
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Pattern;
-import org.example.rlplatform.anno.ValidEmailSuffix;
 import org.example.rlplatform.entity.Result;
+import org.example.rlplatform.entity.StudentClass;
 import org.example.rlplatform.entity.User;
 import org.example.rlplatform.entity.UserRole;
 import org.example.rlplatform.service.UserService;
@@ -15,13 +13,13 @@ import org.example.rlplatform.utils.Md5Util;
 import org.example.rlplatform.utils.ThreadLocalUtil;
 import org.hibernate.validator.constraints.URL;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -41,10 +39,15 @@ public class UserController {
     public Result register(
             @RequestParam String username,
             @RequestParam @Pattern(regexp = "^\\S{5,16}$") String password,
-            @RequestParam @Email @ValidEmailSuffix(allowedSuffixes = {"bjtu.edu.cn"}, message = "系统只支持学校邮箱") String email,
+            @RequestParam String email,
             @RequestParam(defaultValue = "STUDENT") String role) {
-        User u = userService.findByUserName(username);
-        if (u == null) {
+        User u = userService.findByUserNameAndIsDeletedFalse(username);
+        User ue = userService.findByEmail(email);
+        if (u != null) {
+            return Result.error("用户名已被占用");
+        } else if (ue != null) {
+            return Result.error("邮箱已被占用");
+        } else {
             UserRole userRole;
             try {
                 userRole = UserRole.valueOf(role.toUpperCase());
@@ -53,15 +56,13 @@ public class UserController {
             }
             userService.register(username, password, email, userRole);
             return Result.success();
-        } else {
-            return Result.error("用户名已被占用");
         }
     }
 
     @PostMapping("/login")
     public Result<String> login(String username, String password){
 
-        User loginuser = userService.findByUserName(username);
+        User loginuser = userService.findByUserNameAndIsDeletedFalse(username);
         if(loginuser == null){
             return Result.error("用户名错误");
         }
@@ -75,7 +76,7 @@ public class UserController {
             String tokenVersion = UUID.randomUUID().toString();
             claims.put("tokenVersion", tokenVersion);
 
-            String key = "login:version:" + loginuser.getId();            
+            String key = "login:version:" + loginuser.getId();
             stringRedisTemplate.opsForValue().set(key, tokenVersion, 1, TimeUnit.HOURS);
 
             String token = JwtUtil.genToken(claims);
@@ -91,8 +92,8 @@ public class UserController {
 //        Map<String,Object> claims = JwtUtil.parseToken(token);
 //        String username = claims.get("username").toString();
         Map<String, Object> claims = ThreadLocalUtil.get();
-        String username = claims.get("username").toString();
-        User user = userService.findByUserName(username);
+        String userId = claims.get("id").toString();
+        User user = userService.findByIdAndIsDeletedFalse(Integer.parseInt(userId));
         return Result.success(user);
     }
 
@@ -120,8 +121,8 @@ public class UserController {
         }
 
         Map<String, Object> claims = ThreadLocalUtil.get();
-        String username = claims.get("username").toString();
-        if (!userService.findByUserName(username).getPassword().equals(Md5Util.getMD5String(oldPwd))){
+        String userId = claims.get("id").toString();
+        if (!userService.findByIdAndIsDeletedFalse(Integer.parseInt(userId)).getPassword().equals(Md5Util.getMD5String(oldPwd))){
             return Result.error("原密码不正确");
         }
 
@@ -136,8 +137,15 @@ public class UserController {
 
     @GetMapping("/list")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public Result<List<User>> list(){
-        return Result.success(userService.list());
+    public Result<Page<User>> list(
+            @RequestParam(defaultValue = "0") Integer pageNum,
+            @RequestParam(defaultValue = "10") Integer pageSize,
+            @RequestParam(required = false) String role,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) Integer classId,
+            @RequestParam(required = false, defaultValue = "false") Boolean isDeleted
+    ){
+        return Result.success(userService.listByCondition(pageNum, pageSize, role, keyword, classId, isDeleted));
     }
 
     @PatchMapping("/{id}/role")
@@ -162,4 +170,43 @@ public class UserController {
         return Result.success();
     }
 
+    @PatchMapping("/{id}/password_reset")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
+    public Result resetPwdByAdminAndTeacher(@PathVariable Integer id, @RequestBody Map<String,String> params){
+        String newPwd = params.get("newPwd");
+        if (StringUtils.isEmpty(newPwd)) {
+            return Result.error("新密码不能为空");
+        }
+
+        userService.resetPwd(id, newPwd);
+        return Result.success();
+    }
+
+    @PatchMapping("/me/class")
+    public Result studentChooseClass(@RequestParam Integer classId){
+        userService.studentChooseClass(classId);
+        return Result.success();
+    }
+
+    @GetMapping("/me/class")
+    public Result<String> getClassName(){
+        Map<String, Object> claims = ThreadLocalUtil.get();
+        Integer userId = (Integer) claims.get("id");
+        User user = userService.findByIdAndIsDeletedFalse(userId);
+        StudentClass dbclass = user.getStudentClass();
+        if (dbclass == null) {
+            return Result.error("您还未选择班级");
+        } else if (dbclass.getIsDeleted()){
+            return Result.error("班级已删除");
+        }
+        return Result.success(dbclass.getName());
+    }
+
+
+    @PatchMapping("{id}/class")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
+    public Result teacherAssignClass(@PathVariable Integer id, @RequestParam Integer classId){
+        userService.teacherAssignClass(id, classId);
+        return Result.success();
+    }
 }

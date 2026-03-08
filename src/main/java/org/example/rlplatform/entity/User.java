@@ -9,6 +9,7 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import lombok.Data;
+import org.example.rlplatform.anno.ValidEmailSuffix;
 
 import java.time.LocalDateTime;
 
@@ -34,6 +35,7 @@ public class User {
 
     @NotEmpty
     @Email
+    @ValidEmailSuffix(allowedSuffixes = {"bjtu.edu.cn"}, message = "系统只支持学校邮箱")
     @Column(name = "email", unique = true, nullable = false)
     private String email;
 
@@ -43,6 +45,10 @@ public class User {
     @Enumerated(EnumType.STRING)
     @Column(name = "role", nullable = false)
     private UserRole role = UserRole.STUDENT;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "class_id")
+    private StudentClass studentClass;
 
     @Column(name = "create_time", nullable = false)
     private LocalDateTime createTime;
