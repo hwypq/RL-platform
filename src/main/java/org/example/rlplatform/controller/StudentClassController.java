@@ -68,6 +68,6 @@ public class StudentClassController {
             @RequestParam(defaultValue = "10") Integer pageSize,
             @RequestParam(required = false, defaultValue = "false") Boolean isDeleted
     ){
-        return Result.success(userService.listByCondition(pageNum, pageSize,null, null, id, isDeleted));
+        return Result.success(userService.listByCondition(pageNum, pageSize, null, null, id, isDeleted));
     }
 }
