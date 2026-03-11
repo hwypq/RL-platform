@@ -6,9 +6,9 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 //统一响应结果
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Data
 public class Result<T> {
     private Integer code;// 0-成功  1-失败
     private String message;

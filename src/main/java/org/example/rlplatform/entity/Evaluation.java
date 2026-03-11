@@ -33,8 +33,9 @@ public class Evaluation {
     @Column(nullable = false)
     private Integer episodes;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String status = "PENDING"; // PENDING / RUNNING / FINISHED
+    private EvaluationStatus status = EvaluationStatus.PENDING;
 
     @Column(name = "error_message", columnDefinition = "Text")
     private String errorMessage;

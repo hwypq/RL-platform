@@ -15,7 +15,7 @@ public class EvaluationResult {
     private Long evaluationId;
 
     @Column(nullable = false)
-    private Integer result;
+    private Integer result; // 0-成功  1-失败
 
     @Column
     private Integer winner;

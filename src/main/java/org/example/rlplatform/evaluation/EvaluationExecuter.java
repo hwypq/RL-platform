@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.example.rlplatform.entity.Evaluation;
 import org.example.rlplatform.entity.EvaluationResult;
 import org.example.rlplatform.Repository.EvaluationResultRepository;
+import org.example.rlplatform.entity.EvaluationStatus;
 import org.example.rlplatform.service.ModelFileService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -45,7 +46,7 @@ public class EvaluationExecuter {
         Path cwd = Paths.get(System.getProperty("user.dir"));
         Path script = cwd.resolve(scriptPath).normalize();
         if (!script.toFile().exists()) {
-            evaluation.setStatus("FAILED");
+            evaluation.setStatus(EvaluationStatus.FAILED);
             evaluation.setErrorMessage("Script not found: " + script);
             saveEvaluationResult(evaluation, null, null);
             return ;
@@ -78,7 +79,7 @@ public class EvaluationExecuter {
             boolean finished = process.waitFor(30, TimeUnit.MINUTES);
             if (!finished) {
                 process.destroyForcibly();
-                evaluation.setStatus("FAILED");
+                evaluation.setStatus(EvaluationStatus.FAILED);
                 evaluation.setErrorMessage("Python execution timeout");
                 saveEvaluationResult(evaluation, null, null);
                 return;
@@ -98,7 +99,7 @@ public class EvaluationExecuter {
             }
 
             if (exitCode != 0) {
-                evaluation.setStatus("FAILED");
+                evaluation.setStatus(EvaluationStatus.FAILED);
                 evaluation.setErrorMessage(root != null && root.has("error")
                         ? root.path("error").asText()
                         : (out.isEmpty() ? "Python script failed (no output)" : out));
@@ -107,21 +108,21 @@ public class EvaluationExecuter {
             }
 
             if (root == null) {
-                evaluation.setStatus("FAILED");
+                evaluation.setStatus(EvaluationStatus.FAILED);
                 evaluation.setErrorMessage("Invalid JSON from script. Output: " +
                         (out.length() > 500 ? out.substring(0, 500) + "..." : out));
                 saveEvaluationResult(evaluation, null, jsonLine);
                 return;
             }
 
-            String status = root.has("status") ? root.path("status").asText() : "FAILED";
-            evaluation.setStatus("FINISHED".equals(status) ? "FINISHED" : "FAILED");
+            String status = root.has("status") ? root.path("status").asText() : EvaluationStatus.FAILED.name();
+            evaluation.setStatus(EvaluationStatus.valueOf(status.toUpperCase()));
             if (root.has("error")) {
                 evaluation.setErrorMessage(root.path("error").asText());
             }
             saveEvaluationResult(evaluation, root, jsonLine);
         } catch (Exception e) {
-            evaluation.setStatus("FAILED");
+            evaluation.setStatus(EvaluationStatus.FAILED);
             evaluation.setErrorMessage(e.getMessage());
             saveEvaluationResult(evaluation, null, null);
         }
@@ -132,7 +133,7 @@ public class EvaluationExecuter {
         try {
             EvaluationResult er = new EvaluationResult();
             er.setEvaluationId(evaluation.getId());
-            er.setResult("FINISHED".equals(evaluation.getStatus()) ? 1 : 0);
+            er.setResult(evaluation.getStatus() == EvaluationStatus.FINISHED ? 0 : 1);
 //            System.out.println("Saving EvaluationResult..." + root.toString());
             if (jsonLine != null) {
                 er.setDetailedResults(jsonLine);
@@ -144,7 +145,7 @@ public class EvaluationExecuter {
             }
             evaluationResultRepository.save(er);
         } catch (Exception e) {
-            evaluation.setStatus("FAILED");
+            evaluation.setStatus(EvaluationStatus.FAILED);
             if (evaluation.getErrorMessage() == null || evaluation.getErrorMessage().isBlank()) {
                 evaluation.setErrorMessage("Save result failed: " + e.getMessage());
             }

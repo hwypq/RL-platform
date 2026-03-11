@@ -2,6 +2,7 @@ package org.example.rlplatform.service.impl;
 
 import org.example.rlplatform.entity.Evaluation;
 import org.example.rlplatform.Repository.EvaluationRepository;
+import org.example.rlplatform.entity.EvaluationStatus;
 import org.example.rlplatform.evaluation.EvaluationExecuter;
 import org.example.rlplatform.service.EvaluationService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,8 +42,13 @@ public class EvaluationServiceImpl implements EvaluationService {
     @Override
     public void runEvaluation(Long evaluationId) {
         Evaluation evaluation = getEvaluationById(evaluationId);
+        // if (evaluation.getStatus() == EvaluationStatus.RUNNING) {
+        //     throw new RuntimeException("Evaluation is already running");
+        // } else if (evaluation.getStatus() == EvaluationStatus.FINISHED) {
+        //     throw new RuntimeException("Evaluation is already finished");
+        // }
         evaluation.setErrorMessage(null);
-        evaluation.setStatus("RUNNING");
+        evaluation.setStatus(EvaluationStatus.RUNNING);
         evaluation.setUpdateTime(now());
         evaluationRepository.save(evaluation);
 
@@ -56,7 +62,7 @@ public class EvaluationServiceImpl implements EvaluationService {
     @Override
     @Async
     public void runEvaluationAsync(long evaluationId) {
-        runEvaluation(evaluationId);
+            runEvaluation(evaluationId);
     }
 
     @Override
