@@ -60,7 +60,7 @@ public class EvaluationServiceImpl implements EvaluationService {
     }
 
     @Override
-    @Async
+    @Async("evaluationExecutor")
     public void runEvaluationAsync(long evaluationId) {
             runEvaluation(evaluationId);
     }

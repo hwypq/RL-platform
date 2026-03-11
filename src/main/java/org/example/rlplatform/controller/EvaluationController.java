@@ -28,6 +28,9 @@ public class EvaluationController {
         return Result.success(evaluationService.getEvaluationById(id));
     }
 
+    /**
+     * 仅供测试，Evaluation运行现需通过AssignmentController的createEvaluation方法完成
+     */
     @PostMapping("/{id}/run")
     public Result<Void> runEvaluation(@PathVariable Long id) {
         evaluationService.runEvaluationAsync(id);
