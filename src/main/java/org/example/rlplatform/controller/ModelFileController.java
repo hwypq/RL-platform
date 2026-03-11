@@ -26,7 +26,7 @@ public class ModelFileController {
     @PostMapping("/upload")
     public Result<ModelFile> upload(
             @RequestParam("file") MultipartFile file,
-            @RequestParam("studentId") Long studentId) {
+            @RequestParam("studentId") Integer studentId) {
                 try {
                     ModelFile modelFile = modelFileService.uploadModelFile(file, studentId);
                     return Result.success(modelFile);
@@ -36,12 +36,12 @@ public class ModelFileController {
     }
 
     @GetMapping("/{id}")
-    public Result<ModelFile> getById(@PathVariable Integer id) {
+    public Result<ModelFile> getById(@PathVariable Long id) {
         return Result.success(modelFileService.getById(id));
     }
 
     @GetMapping
-    public Result<List<ModelFile>> list(@RequestParam(required = false) Long studentId) {
+    public Result<List<ModelFile>> list(@RequestParam(required = false) Integer studentId) {
         if (studentId != null) {
             return Result.success(modelFileService.listByStudentId(studentId));
         }

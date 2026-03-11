@@ -16,7 +16,7 @@ public class Evaluation {
     private Long id;
 
     @Column(name = "student_id", nullable = false)
-    private Long studentId;
+    private Integer studentId;
 
     @Column(name = "agent_name", nullable = false)
     private String agentName;
@@ -25,7 +25,10 @@ public class Evaluation {
     private String environment;
 
     @Column(name = "model_id", nullable = false)
-    private Integer modelId;
+    private Long modelId;
+
+    @Column(name = "assignment_id", nullable = false)
+    private Integer assignmentId;
 
     @Column(nullable = false)
     private Integer episodes;

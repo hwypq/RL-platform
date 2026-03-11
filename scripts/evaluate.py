@@ -209,7 +209,6 @@ def main(argv=None):
 
     args = parse_args(argv)
 
-    # 处理 workspace：与 evaluate_cheetah.py 保持一致的行为
     workspace = os.path.abspath(args.workspace or os.getcwd())
     if args.workspace and workspace not in sys.path:
         sys.path.insert(0, workspace)

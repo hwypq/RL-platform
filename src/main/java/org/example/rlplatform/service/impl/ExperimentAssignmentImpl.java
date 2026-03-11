@@ -72,4 +72,9 @@ public class ExperimentAssignmentImpl implements ExperimentAssignmentService {
     public Page<ExperimentAssignment> listAssignmentsByClass(Integer classId, Integer pageNum, Integer pageSize) {
         return experimentAssignmentRepository.findByStudentClass_IdAndIsDeletedFalse(classId, PageRequest.of(pageNum, pageSize));
     }
+
+    @Override
+    public ExperimentAssignment getById(Integer assignmentId) {
+        return experimentAssignmentRepository.findByIdAndIsDeletedFalse(assignmentId);
+    }
 }

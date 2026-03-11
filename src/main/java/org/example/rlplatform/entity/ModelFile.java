@@ -11,10 +11,10 @@ import java.time.LocalDateTime;
 public class ModelFile {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    private Long id;
 
     @Column(name = "student_id", nullable = false)
-    private Long studentId;
+    private Integer studentId;
 
     @Column(name = "file_name", nullable = false, length = 255)
     private String fileName;

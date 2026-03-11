@@ -10,11 +10,11 @@ public interface ModelFileService {
 
     void create(ModelFile modelFile);
 
-    ModelFile uploadModelFile(MultipartFile file, Long studentId) throws IOException;
+    ModelFile uploadModelFile(MultipartFile file, Integer studentId) throws IOException;
 
-    ModelFile getById(Integer id);
+    ModelFile getById(Long id);
 
-    List<ModelFile> listByStudentId(Long studentId);
+    List<ModelFile> listByStudentId(Integer studentId);
 
     List<ModelFile> list();
 }

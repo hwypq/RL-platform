@@ -33,12 +33,12 @@ public class ModelFileServiceImpl implements ModelFileService {
     }
 
     @Override
-    public ModelFile getById(Integer id) {
-        return modelFileRepository.findById(id).orElseThrow(RuntimeException::new);
+    public ModelFile getById(Long id) {
+        return modelFileRepository.findById(id);
     }
 
     @Override
-    public List<ModelFile> listByStudentId(Long studentId) {
+    public List<ModelFile> listByStudentId(Integer studentId) {
         return modelFileRepository.findByStudentId(studentId);
     }
 
@@ -48,7 +48,7 @@ public class ModelFileServiceImpl implements ModelFileService {
     }
 
     @Override
-    public ModelFile uploadModelFile(MultipartFile file, Long studentId) throws IOException{
+    public ModelFile uploadModelFile(MultipartFile file, Integer studentId) throws IOException{
 
         String originalfileName = file.getOriginalFilename();
         String suffix = originalfileName.substring(originalfileName.lastIndexOf("."));

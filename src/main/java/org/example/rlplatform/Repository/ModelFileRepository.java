@@ -7,5 +7,7 @@ import java.util.List;
 
 public interface ModelFileRepository extends JpaRepository<ModelFile, Integer> {
 
-    List<ModelFile> findByStudentId(Long studentId);
+    List<ModelFile> findByStudentId(Integer studentId);
+
+    ModelFile findById(Long id);
 }
