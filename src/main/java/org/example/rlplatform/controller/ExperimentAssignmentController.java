@@ -40,6 +40,13 @@ public class ExperimentAssignmentController {
         return Result.success();
     }
 
+    @PatchMapping("assignments/{assignmentId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
+    public Result<Void> update(@PathVariable Integer assignmentId, @RequestBody ExperimentAssignment experimentAssignment) {
+        experimentAssignmentService.update(assignmentId, experimentAssignment);
+        return Result.success();
+    }
+
     @GetMapping("me/assignments")
     @PreAuthorize("hasRole('STUDENT')")
     public Result<Page<ExperimentAssignment>> listStuAssignments(
@@ -68,7 +75,7 @@ public class ExperimentAssignmentController {
         return Result.success(experimentAssignmentService.listAssignmentsByClass(classId, pageNum, pageSize));
     }
 
-    @PostMapping("assignment/{assignmentId}/evaluations")
+    @PostMapping("assignments/{assignmentId}/evaluations")
     public Result<Void> createEvaluation(@PathVariable Integer assignmentId, @RequestBody Evaluation evaluation) {
 
         Map<String, Object> claims = ThreadLocalUtil.get();

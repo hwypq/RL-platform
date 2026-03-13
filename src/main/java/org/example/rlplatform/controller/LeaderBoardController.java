@@ -16,7 +16,7 @@ public class LeaderBoardController {
     @Autowired
     private LeaderBoardService leaderBoardService;
 
-    @GetMapping("/assignment/{assignmentId}/leaderboard")
+    @GetMapping("/assignments/{assignmentId}/leaderboard")
     public Result<Page<LeaderBoard>> list(
             @PathVariable Integer assignmentId,
             @RequestParam(defaultValue = "0") Integer pageNum,

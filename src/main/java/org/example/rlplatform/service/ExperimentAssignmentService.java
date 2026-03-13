@@ -12,6 +12,8 @@ public interface ExperimentAssignmentService {
 
     void create(Integer classId, ExperimentAssignment experimentAssignment);
 
+    void update(Integer assignmentId, ExperimentAssignment experimentAssignment);
+
     Page<ExperimentAssignment> listTeaAssignments(Integer pageNum, Integer pageSize);
 
     Page<ExperimentAssignment> listAssignmentsByClass(Integer classId, Integer pageNum, Integer pageSize);

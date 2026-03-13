@@ -1,10 +1,12 @@
 package org.example.rlplatform.service.impl;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.example.rlplatform.Repository.ExperimentAssignmentRepository;
 import org.example.rlplatform.entity.ExperimentAssignment;
+import org.example.rlplatform.entity.ExperimentConfig;
 import org.example.rlplatform.entity.StudentClass;
 import org.example.rlplatform.entity.User;
-import org.example.rlplatform.entity.UserRole;
 import org.example.rlplatform.service.ExperimentAssignmentService;
 import org.example.rlplatform.service.StudentClassService;
 import org.example.rlplatform.service.UserService;
@@ -15,7 +17,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Map;
 
 @Service
@@ -30,6 +31,9 @@ public class ExperimentAssignmentImpl implements ExperimentAssignmentService {
     @Autowired
     private ExperimentAssignmentRepository experimentAssignmentRepository;
 
+    @Autowired
+    private ObjectMapper objectMapper;
+
     @Override
     public void create(Integer classId, ExperimentAssignment experimentAssignment) {
         Map<String, Object> claims = ThreadLocalUtil.get();
@@ -39,7 +43,45 @@ public class ExperimentAssignmentImpl implements ExperimentAssignmentService {
         experimentAssignment.setCreateTime(LocalDateTime.now());
         experimentAssignment.setUpdateTime(LocalDateTime.now());
         experimentAssignment.setIsDeleted(false);
+
+        ExperimentConfig config = experimentAssignment.getConfig();
+        if (config != null) {
+            try {
+                experimentAssignment.setConfigJson(objectMapper.writeValueAsString(config));
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException("实验配置序列化失败", e);
+            }
+        }
+
         experimentAssignmentRepository.save(experimentAssignment);
+    }
+
+    @Override
+    public void update(Integer assignmentId, ExperimentAssignment experimentAssignment) {
+        ExperimentAssignment dbassignment = experimentAssignmentRepository.findByIdAndIsDeletedFalse(assignmentId);
+        System.out.println(dbassignment);
+        if (dbassignment == null) {
+            throw new RuntimeException("实验不存在");
+        }
+        dbassignment.setTitle(experimentAssignment.getTitle());
+        dbassignment.setConfig(experimentAssignment.getConfig());
+        dbassignment.setEvaluationMode(experimentAssignment.getEvaluationMode());
+        dbassignment.setAgentName(experimentAssignment.getAgentName());
+        dbassignment.setEnvironment(experimentAssignment.getEnvironment());
+        dbassignment.setDeadline(experimentAssignment.getDeadline());
+        dbassignment.setUpdateTime(LocalDateTime.now());
+        dbassignment.setIsDeleted(false);
+
+        ExperimentConfig config = dbassignment.getConfig();
+        if (config != null) {
+            try {
+                dbassignment.setConfigJson(objectMapper.writeValueAsString(config));
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException("实验配置序列化失败", e);
+            }
+        }
+
+        experimentAssignmentRepository.save(dbassignment);
     }
 
     @Override
@@ -72,6 +114,19 @@ public class ExperimentAssignmentImpl implements ExperimentAssignmentService {
 
     @Override
     public ExperimentAssignment getById(Integer assignmentId) {
-        return experimentAssignmentRepository.findByIdAndIsDeletedFalse(assignmentId);
+        ExperimentAssignment assignment = experimentAssignmentRepository.findByIdAndIsDeletedFalse(assignmentId);
+        if (assignment == null) {
+            return null;
+        }
+        String configJson = assignment.getConfigJson();
+        if (configJson != null && !configJson.isBlank()) {
+            try {
+                ExperimentConfig config = objectMapper.readValue(configJson, ExperimentConfig.class);
+                assignment.setConfig(config);
+            } catch (JsonProcessingException e) {
+                // 配置解析失败时暂时忽略，保留原始 JSON
+            }
+        }
+        return assignment;
     }
 }

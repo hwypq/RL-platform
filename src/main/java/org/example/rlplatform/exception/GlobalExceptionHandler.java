@@ -27,6 +27,6 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(DataIntegrityViolationException.class)
     public Result handleDataIntegrityViolationException(DataIntegrityViolationException e) {
         e.printStackTrace();
-        return Result.error("数据已存在，请检查后重试");
+        return Result.error("数据错误，请检查后重试");
     }
 }

@@ -24,8 +24,15 @@ public class ExperimentAssignment {
     @Column(nullable = false)
     private String title;
 
-    @Column(columnDefinition = "TEXT")
-    private String description;
+    @Transient
+    private ExperimentConfig config;
+
+    @Column(name = "config_json", columnDefinition = "TEXT")
+    private String configJson;
+
+    @Column(name = "evaluation_mode", nullable = false)
+    @Enumerated(EnumType.STRING)
+    private EvaluationMode evaluationMode = EvaluationMode.SINGLE;
 
     @Column(name = "agent_name")
     private String agentName;
