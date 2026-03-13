@@ -47,6 +47,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String token = request.getHeader("Authorization");
 
+        if (token != null && token.startsWith("Bearer ")) {
+            token = token.substring(7);
+        }
+
+
         try {
             if (token != null && !token.isBlank()) {
                 Map<String, Object> claims = JwtUtil.parseToken(token);

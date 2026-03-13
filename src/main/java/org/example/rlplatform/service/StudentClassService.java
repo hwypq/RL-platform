@@ -16,4 +16,6 @@ public interface StudentClassService {
     StudentClass findByName(String name);
 
     StudentClass findByIdAndIsDeletedFalse(Integer id);
+
+    StudentClass findByCodeAndIsDeletedFalse(String code);
 }

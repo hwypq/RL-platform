@@ -62,9 +62,6 @@ public class ExperimentAssignmentImpl implements ExperimentAssignmentService {
         Map<String, Object> claims = ThreadLocalUtil.get();
         Integer userId = (Integer) claims.get("id");
         User me = userService.findByIdAndIsDeletedFalse(userId);
-        if (me.getRole() != UserRole.TEACHER) {
-            throw new RuntimeException("您不是教师");
-        }
         return experimentAssignmentRepository.findByTeacherIdAndIsDeletedFalse(userId, PageRequest.of(pageNum, pageSize));
     }
 

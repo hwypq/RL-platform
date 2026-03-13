@@ -9,6 +9,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import jakarta.persistence.criteria.Predicate;
@@ -32,9 +33,17 @@ public class StudentClassImpl implements StudentClassService {
     }
 
     @Override
+    public StudentClass findByCodeAndIsDeletedFalse(String code) {
+        return studentClassRepository.findByCodeAndIsDeletedFalse(code);
+    }
+
+    @Override
     public void create(StudentClass studentClass) {
         studentClass.setIsDeleted(false);
         studentClass.setCreateTime(now());
+        if (studentClass.getCode() == null || studentClass.getCode().isBlank()) {
+            studentClass.setCode(generateClassCode());
+        }
         studentClassRepository.save(studentClass);
     }
 
@@ -42,6 +51,7 @@ public class StudentClassImpl implements StudentClassService {
     public void update(StudentClass studentClass, Integer id) {
         StudentClass sc = getByIdAndNotDeleted(id);
         sc.setName(studentClass.getName());
+        sc.setCode(studentClass.getCode());
         studentClassRepository.save(sc);
     }
 
@@ -71,6 +81,25 @@ public class StudentClassImpl implements StudentClassService {
             throw new RuntimeException("班级已删除");
         }
         return sc;
+    }
+
+    private String generateClassCode() {
+        String prefix = "RL" + LocalDate.now().getYear() + "A";
+
+        StudentClass last = studentClassRepository
+                .findTopByCodeStartingWithOrderByCodeDesc(prefix);
+        int nextSeq = 1;
+        if (last != null) {
+            String lastCode = last.getCode();         
+            String seqStr = lastCode.substring(prefix.length()); 
+            try {
+                nextSeq = Integer.parseInt(seqStr) + 1;
+            } catch (NumberFormatException e) {
+                nextSeq = 1;
+            }
+        }
+        String seq = String.format("%02d", nextSeq);
+        return prefix + seq;
     }
 
 }

@@ -33,7 +33,9 @@ public interface UserService {
 
     Page<User> listByCondition(Integer pageNum, Integer pageSize, String role, String keyword, Integer classId, Boolean isDeleted);
 
-    void studentChooseClass(Integer classId);
+    void studentChooseClass(String code);
 
     void teacherAssignClass(Integer userId, Integer classId);
+
+    void studentQuitClass();
 }

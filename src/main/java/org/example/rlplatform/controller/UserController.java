@@ -183,8 +183,8 @@ public class UserController {
     }
 
     @PatchMapping("/me/class")
-    public Result studentChooseClass(@RequestParam Integer classId){
-        userService.studentChooseClass(classId);
+    public Result studentChooseClass(@RequestParam String code){
+        userService.studentChooseClass(code);
         return Result.success();
     }
 
@@ -202,6 +202,11 @@ public class UserController {
         return Result.success(dbclass.getName());
     }
 
+    @PatchMapping("/me/class/quit")
+    public Result studentQuitClass(){
+        userService.studentQuitClass();
+        return Result.success();
+    }
 
     @PatchMapping("{id}/class")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")

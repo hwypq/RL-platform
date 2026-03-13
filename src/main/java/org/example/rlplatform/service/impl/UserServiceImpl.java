@@ -179,11 +179,14 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public void studentChooseClass(Integer classId) {
+    public void studentChooseClass(String code) {
         Map<String, Object> map = ThreadLocalUtil.get();
         Integer userId = (Integer) map.get("id");
         User dbuser = getByIdAndNotDeleted(userId);
-        StudentClass sc = studentClassService.findByIdAndIsDeletedFalse(classId);
+        StudentClass sc = studentClassService.findByCodeAndIsDeletedFalse(code);
+        if (sc == null) {
+            throw new RuntimeException("班级不存在");
+        }
         dbuser.setStudentClass(sc);
         dbuser.setUpdateTime(LocalDateTime.now());
         userRepository.save(dbuser);
@@ -198,6 +201,17 @@ public class UserServiceImpl implements UserService {
         }
         StudentClass sc = studentClassService.findByIdAndIsDeletedFalse(classId);
         dbuser.setStudentClass(sc);
+        dbuser.setUpdateTime(LocalDateTime.now());
+        userRepository.save(dbuser);
+    }
+
+    @Override
+    @Transactional
+    public void studentQuitClass() {
+        Map<String, Object> map = ThreadLocalUtil.get();
+        Integer userId = (Integer) map.get("id");
+        User dbuser = getByIdAndNotDeleted(userId);
+        dbuser.setStudentClass(null);
         dbuser.setUpdateTime(LocalDateTime.now());
         userRepository.save(dbuser);
     }

@@ -9,4 +9,8 @@ public interface StudentClassRepository extends JpaRepository<StudentClass, Inte
     StudentClass findByName(String name);
 
     StudentClass findByIdAndIsDeletedFalse(Integer id);
+
+    StudentClass findByCodeAndIsDeletedFalse(String code);
+
+    StudentClass findTopByCodeStartingWithOrderByCodeDesc(String prefix);
 }

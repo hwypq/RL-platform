@@ -22,18 +22,30 @@ public class StudentClassController {
     @PostMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
     public Result<Void> create(@RequestBody StudentClass studentClass) {
-        StudentClass sc = studentClassService.findByName(studentClass.getName());
-        if  (sc != null) {
+        StudentClass scByName = studentClassService.findByName(studentClass.getName());
+        StudentClass scByCode = studentClassService.findByCodeAndIsDeletedFalse(studentClass.getCode());
+        if (scByName != null) {
             return Result.error("班级名字已被占用");
-        } else {
-            studentClassService.create(studentClass);
-            return Result.success();
         }
+        if (scByCode != null) {
+            return Result.error("班级编码已被占用");
+        }
+        studentClassService.create(studentClass);
+        return Result.success();
     }
 
     @PutMapping("{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
     public Result<Void> update(@RequestBody StudentClass studentClass, @PathVariable Integer id) {
+        StudentClass sc = studentClassService.findByIdAndIsDeletedFalse(id);
+        StudentClass scByName = studentClassService.findByName(studentClass.getName());
+        StudentClass scByCode = studentClassService.findByCodeAndIsDeletedFalse(studentClass.getCode());
+        if (scByName != null && scByName.getId() != id) {
+            return Result.error("班级名字已被占用");
+        }
+        if (scByCode != null && scByCode.getId() != id) {
+            return Result.error("班级编码已被占用");
+        }
         studentClassService.update(studentClass, id);
         return Result.success();
     }
@@ -45,19 +57,28 @@ public class StudentClassController {
         return Result.success();
     }
 
-    @GetMapping
-    public Result<Page<StudentClass>> list(
-        @RequestParam(defaultValue = "0") Integer pageNum,
-        @RequestParam(defaultValue = "10") Integer pageSize,
-        @RequestParam(required = false, defaultValue = "false") Boolean isDeleted
-    ){
-        return Result.success(studentClassService.listPage(pageNum, pageSize, isDeleted));
+    @GetMapping("code/{code}")
+    public Result<StudentClass> getByCode(@PathVariable String code) {
+        StudentClass sc = studentClassService.findByCodeAndIsDeletedFalse(code);
+        if (sc == null) {
+            return Result.error("班级不存在");
+        }
+        return Result.success(sc);
     }
 
     @GetMapping("{id}")
-    public Result<StudentClass> get(@PathVariable Integer id) {
+    public Result<StudentClass> getById(@PathVariable Integer id) {
         StudentClass sc = studentClassService.findByIdAndIsDeletedFalse(id);
         return Result.success(sc);
+    }
+
+    @GetMapping
+    public Result<Page<StudentClass>> list(
+            @RequestParam(defaultValue = "0") Integer pageNum,
+            @RequestParam(defaultValue = "10") Integer pageSize,
+            @RequestParam(required = false, defaultValue = "false") Boolean isDeleted
+    ){
+        return Result.success(studentClassService.listPage(pageNum, pageSize, isDeleted));
     }
 
     @GetMapping("{id}/users")
@@ -70,4 +91,5 @@ public class StudentClassController {
     ){
         return Result.success(userService.listByCondition(pageNum, pageSize, null, null, id, isDeleted));
     }
+
 }
