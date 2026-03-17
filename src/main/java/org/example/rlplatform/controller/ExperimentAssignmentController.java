@@ -13,6 +13,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Map;
@@ -76,17 +77,15 @@ public class ExperimentAssignmentController {
     }
 
     @PostMapping("assignments/{assignmentId}/evaluations")
-    public Result<Void> createEvaluation(@PathVariable Integer assignmentId, @RequestBody Evaluation evaluation) {
-
+    public Result<Void> createEvaluation(
+        @PathVariable Integer assignmentId, 
+        @RequestParam("model") MultipartFile model,
+        @RequestParam("config") MultipartFile config
+    ) {
         Map<String, Object> claims = ThreadLocalUtil.get();
         Integer studentId = (Integer) claims.get("id");
-        checkCooldown(studentId, assignmentId.longValue(), 10L); // 10 秒冷却
-        User user = userService.findByIdAndIsDeletedFalse(studentId);
-        evaluation.setStudentId(studentId);
-        evaluation.setAssignmentId(assignmentId);
-        evaluation.setEnvironment(experimentAssignmentService.getById(assignmentId).getEnvironment());
-        evaluationService.createEvaluation(evaluation);
-        evaluationService.runEvaluation(evaluation.getId());
+        checkCooldown(studentId, assignmentId.longValue(), 10L);
+        evaluationService.runEvaluationByConfig(assignmentId, model, config);
         return Result.success();
     }
 

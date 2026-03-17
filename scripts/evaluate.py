@@ -79,7 +79,7 @@ def make_env(env_id: str,
 
     if realtime_render:
         env = gym.make(env_id, render_mode="human")
-    elif render_video:   
+    elif render_video:
         env = gym.make(env_id, render_mode="rgb_array")
     else:
         env = gym.make(env_id, render_mode=None)
@@ -248,6 +248,8 @@ def parse_args(argv=None):
                         help="Record video to ./videos/")
     parser.add_argument("--baseline_model_path", default=None,
                         help="Optional baseline model path")
+    parser.add_argument("--config_path", default=None,
+                        help="Optional config file path associated with model")
     return parser.parse_args(argv)
 
 

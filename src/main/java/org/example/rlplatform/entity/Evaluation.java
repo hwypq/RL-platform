@@ -23,7 +23,6 @@ public class Evaluation {
     @Column(nullable = false)
     private String environment;
 
-
     @Column(name = "model_id")
     private Long modelId;
 

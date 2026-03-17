@@ -56,9 +56,9 @@ public class ModelFileServiceImpl implements ModelFileService {
 
         String baseDir = (workspace != null && !workspace.isBlank()) ? workspace : Paths.get(System.getProperty("user.dir")).toString();
         Path modelsDir = Paths.get(baseDir, "models");
-         if (!modelsDir.toFile().exists()) {
-             modelsDir.toFile().mkdirs();
-         }
+        if (!modelsDir.toFile().exists()) {
+            modelsDir.toFile().mkdirs();
+        }
         // System.out.println(modelsDir.resolve(fileName));
         file.transferTo(modelsDir.resolve(fileName));
         ModelFile modelFile = new ModelFile();
@@ -66,6 +66,52 @@ public class ModelFileServiceImpl implements ModelFileService {
         modelFile.setFileName(fileName);
         modelFile.setFilePath("models/" + fileName);
         modelFile.setFileSize(file.getSize());
+        modelFile.setUploadTime(LocalDateTime.now());
+        modelFileRepository.save(modelFile);
+        return modelFile;
+    }
+
+    @Override
+    public ModelFile uploadModelWithConfig(MultipartFile modelFileMultipart, MultipartFile configFileMultipart, Integer studentId) throws IOException {
+        if (modelFileMultipart == null || modelFileMultipart.isEmpty()) {
+            throw new IllegalArgumentException("model file is required");
+        }
+        if (configFileMultipart == null || configFileMultipart.isEmpty()) {
+            throw new IllegalArgumentException("config file is required");
+        }
+
+        String baseDir = (workspace != null && !workspace.isBlank())
+                ? workspace
+                : Paths.get(System.getProperty("user.dir")).toString();
+
+        // 保存模型权重到 models 目录
+        String modelOriginalName = modelFileMultipart.getOriginalFilename();
+        String modelSuffix = modelOriginalName.substring(modelOriginalName.lastIndexOf("."));
+        String modelFileName = UUID.randomUUID().toString() + modelSuffix;
+        Path modelsDir = Paths.get(baseDir, "models");
+        if (!modelsDir.toFile().exists()) {
+            modelsDir.toFile().mkdirs();
+        }
+        Path modelPath = modelsDir.resolve(modelFileName);
+        modelFileMultipart.transferTo(modelPath);
+
+        // 保存配置文件到 configs 目录
+        String configOriginalName = configFileMultipart.getOriginalFilename();
+        String configSuffix = configOriginalName.substring(configOriginalName.lastIndexOf("."));
+        String configFileName = UUID.randomUUID().toString() + configSuffix;
+        Path configsDir = Paths.get(baseDir, "configs");
+        if (!configsDir.toFile().exists()) {
+            configsDir.toFile().mkdirs();
+        }
+        Path configPath = configsDir.resolve(configFileName);
+        configFileMultipart.transferTo(configPath);
+
+        ModelFile modelFile = new ModelFile();
+        modelFile.setStudentId(studentId);
+        modelFile.setFileName(modelFileName);
+        modelFile.setFilePath("models/" + modelFileName);
+        modelFile.setFileSize(modelFileMultipart.getSize());
+        modelFile.setConfigPath("configs/" + configFileName);
         modelFile.setUploadTime(LocalDateTime.now());
         modelFileRepository.save(modelFile);
         return modelFile;

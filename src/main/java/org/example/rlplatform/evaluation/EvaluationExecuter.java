@@ -2,9 +2,9 @@ package org.example.rlplatform.evaluation;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.example.rlplatform.Repository.EvaluationResultRepository;
 import org.example.rlplatform.entity.Evaluation;
 import org.example.rlplatform.entity.EvaluationResult;
+import org.example.rlplatform.Repository.EvaluationResultRepository;
 import org.example.rlplatform.entity.EvaluationStatus;
 import org.example.rlplatform.service.ModelFileService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,8 +40,57 @@ public class EvaluationExecuter {
     private ModelFileService modelFileService;
 
     public void execute(Evaluation evaluation) {
-        String modelName = evaluation.getModelId() != null ? modelFileService.getById(evaluation.getModelId()).getFileName() : null;
-        String agentType = evaluation.getAgentName();
+        String modelName = null;
+        String configPath = null;
+        if (evaluation.getModelId() != null) {
+            var modelFile = modelFileService.getById(evaluation.getModelId());
+            if (modelFile != null) {
+                modelName = modelFile.getFileName();
+                configPath = workspaceConfig + "/" + modelFile.getConfigPath();
+            }
+        }
+
+        if (configPath != null && !configPath.isBlank()) {
+            if (!Paths.get(configPath.replace("\\", "/")).toFile().exists()) {
+                evaluation.setStatus(EvaluationStatus.FAILED);
+                evaluation.setErrorMessage("Config file not found: " + configPath);
+                saveEvaluationResult(evaluation, null, null);
+                return;
+            }
+        }
+
+        Path baselineModelPath = null;
+        String agentType = null;
+        String baseline_algorithm = null;
+        try {
+            JsonNode configRoot = objectMapper.readTree(Paths.get(configPath).toFile());
+            agentType = configRoot.path("algorithm").asText(null);
+            if (agentType == null || agentType.isBlank()) {
+                evaluation.setStatus(EvaluationStatus.FAILED);
+                evaluation.setErrorMessage("algorithm not found in config: " + configPath);
+                saveEvaluationResult(evaluation, null, null);
+                return;
+            }
+
+            baseline_algorithm = configRoot.path("baseline_algorithm").asText(null);
+            if (baseline_algorithm == null || baseline_algorithm.isBlank()) {
+                evaluation.setStatus(EvaluationStatus.FAILED);
+                evaluation.setErrorMessage("baseline_algorithm not found in config: " + configPath);
+                saveEvaluationResult(evaluation, null, null);
+                return;
+            }
+
+            // {environment}\{agent}\baseline.pth，例如 LunarLander\dqn\baseline.pth
+            baselineModelPath = Paths.get(evaluation.getEnvironment(), baseline_algorithm.toLowerCase(), "baseline.pth");
+
+            // System.out.println("baseline model path: " + baselineModelPath.toString());
+
+        } catch (Exception e) {
+            evaluation.setStatus(EvaluationStatus.FAILED);
+            evaluation.setErrorMessage("Failed to read config file: " + e.getMessage());
+            saveEvaluationResult(evaluation, null, null);
+            return;
+        }
 
         Path cwd = Paths.get(System.getProperty("user.dir"));
         Path script = cwd.resolve(scriptPath).normalize();
@@ -52,11 +101,6 @@ public class EvaluationExecuter {
             return ;
         }
 
-        // {environment}\{agent}\baseline.pth，例如 LunarLander\dqn\baseline.pth
-        Path baselineModelPath = Paths.get(evaluation.getEnvironment(), agentType.toLowerCase(), "baseline.pth");
-
-        // System.out.println("baseline model path: " + baselineModelPath.toString());
-
         ProcessBuilder pb = new ProcessBuilder(
                 pythonCmd, script.toString(),
                 "--env", evaluation.getEnvironment(),
@@ -65,6 +109,7 @@ public class EvaluationExecuter {
                 "--episodes", String.valueOf(evaluation.getEpisodes()),
                 "--workspace", workspaceConfig,
                 "--baseline_model_path", baselineModelPath.toString(),
+                "--config_path", configPath,
                 "--render_video"
                 // "--realtime_render"
         );

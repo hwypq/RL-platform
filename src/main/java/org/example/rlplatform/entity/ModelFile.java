@@ -25,6 +25,9 @@ public class ModelFile {
     @Column(name = "file_size")
     private Long fileSize;
 
+    @Column(name = "config_path", length = 500)
+    private String configPath;
+
     @Column(name = "upload_time")
     private LocalDateTime uploadTime;
 }

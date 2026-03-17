@@ -9,6 +9,7 @@ import org.example.rlplatform.utils.ThreadLocalUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -89,10 +90,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
 
             filterChain.doFilter(request, response);
-        } catch (Exception ex) {
-            // token 非法时，清理上下文，但不直接终止链路，让后续处理返回 401
+        } catch (AuthenticationException ex) {
             SecurityContextHolder.clearContext();
-            filterChain.doFilter(request, response);
+            throw ex;
         } finally {
             // 防止 ThreadLocal 内存泄漏
             ThreadLocalUtil.remove();

@@ -12,6 +12,8 @@ public interface ModelFileService {
 
     ModelFile uploadModelFile(MultipartFile file, Integer studentId) throws IOException;
 
+    ModelFile uploadModelWithConfig(MultipartFile modelFile, MultipartFile configFile, Integer studentId) throws IOException;
+
     ModelFile getById(Long id);
 
     List<ModelFile> listByStudentId(Integer studentId);
